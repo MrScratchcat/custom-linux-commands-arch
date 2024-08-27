@@ -1,6 +1,6 @@
 #!/bin/bash
-sudo pacman -Syyu
-sudo pacman -S git --no-confirm
+sudo pacman -Syyu --noconfirm
+sudo pacman -S git --noconfirm
 yes | sudo pacman -S --needed base-devel
 git clone https://aur.archlinux.org/minecraft-launcher.git
 cd minecraft-launcher/
