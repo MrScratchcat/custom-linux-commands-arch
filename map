@@ -1,0 +1,3 @@
+#!/bin/bash
+sudo pacman -S inetutils --noconfirm
+telnet mapscii.me
