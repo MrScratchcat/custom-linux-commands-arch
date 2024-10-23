@@ -1,0 +1,23 @@
+#!/bin/bash
+if command -v yay &> /dev/null
+then
+    echo "Yay is installed!"
+else
+    sudo pacman -Syyu
+    echo "Yay is not installed. installing yay..."
+    if [ -f /etc/manjaro-release ]; then
+        sudo pamac install yay --no-confirm
+    else
+        sudo pacman -Syu --noconfirm
+        sudo pacman -S --needed base-devel git --noconfirm
+        git clone https://aur.archlinux.org/yay.git
+        cd yay
+        makepkg -si --noconfirm
+        cd ..
+        sudo rm -rf yay
+    fi
+fi
+yay -S papirus-icon-theme-git  --noconfirm
+gsettings set org.gnome.desktop.interface icon-theme 'Papirus'
+echo ""
+echo "you maybe need to reboot to apply changes"

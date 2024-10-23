@@ -1,3 +1,9 @@
 #!/bin/bash
-sudo pacman -S inetutils --noconfirm
+if command -v inetutils &> /dev/null
+then
+    echo inetutils is installed > /dev/null
+else
+    sudo pacman -Syyu
+    sudo pacman -S inetutils --noconfirm
+fi
 telnet mapscii.me

@@ -1,0 +1,10 @@
+#!/bin/bash
+if command -v flatpak &> /dev/null
+then
+  echo "flatpak is installed" > /dev/null
+else
+  sudo pacman -Syyu
+  sudo pacman -S flatpak --noconfirm
+  clear
+fi
+flatpak install flathub org.libretro.RetroArch com.steamgriddb.steam-rom-manager org.DolphinEmu.dolphin-emu org.yuzu_emu.yuzu net.pcsx2.PCSX2 net.kuribo64.melonDS io.github.simple64.simple64 org.duckstation.DuckStation org.citra_emu.citra info.cemu.Cemu -y

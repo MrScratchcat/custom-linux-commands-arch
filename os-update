@@ -1,0 +1,14 @@
+#!/bin/bash
+sudo pacman -Syyu
+if command -v flatpak &> /dev/null
+then
+    echo flatpak is installed > /dev/null
+else
+    sudo pacman -S flatpak --noconfirm
+fi
+git clone https://github.com/MrScratchcat/custom-linux-commands-arch
+cd custom-linux-commands-arch
+cp * /bin
+sudo chmod +X /bin/*
+cd ..
+rm -rf custom-linux-commands-arch
