@@ -8,7 +8,7 @@ else
 fi
 git clone https://github.com/MrScratchcat/custom-linux-commands-arch
 cd custom-linux-commands-arch
-cp * /bin
-sudo chmod +X /bin/*
+sudo cp * /bin
+sudo chmod +X /bin/* > /dev/null 2>&1
 cd ..
 rm -rf custom-linux-commands-arch
