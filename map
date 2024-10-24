@@ -6,4 +6,4 @@ else
     sudo pacman -Syyu
     sudo pacman -S inetutils --noconfirm
 fi
-telnet mapscii.me
+telnet towel.blinkenlights.nl
