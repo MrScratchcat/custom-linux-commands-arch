@@ -18,7 +18,7 @@ else
     fi
 fi
 sudo pacman -S gnome-tweaks --noconfirm
-yay -S papirus-icon-theme-git  --noconfirm
+yay -S papirus-icon-theme-git --noconfirm
 gsettings set org.gnome.desktop.interface icon-theme 'Papirus'
 echo ""
 echo "you maybe need to reboot to apply changes"
