@@ -8,7 +8,7 @@ else
 fi
 cd
 git clone https://github.com/MrScratchcat/custom-linux-commands-arch
-cd custom-linux-commands/
+cd custom-linux-commands-arch/
 sudo cp * /bin
 cd /bin
 sudo chmod +x * 
