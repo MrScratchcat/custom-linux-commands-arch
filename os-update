@@ -7,7 +7,7 @@ else
     sudo pacman -S flatpak --noconfirm
 fi
 cd
-git clone https://github.com/MrScratchcat/custom-linux-commands
+git clone https://github.com/MrScratchcat/custom-linux-commands-arch
 cd custom-linux-commands/
 sudo cp * /bin
 cd /bin
