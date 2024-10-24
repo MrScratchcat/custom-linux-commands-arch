@@ -12,6 +12,6 @@ cd custom-linux-commands-arch
 chmod +x *
 sudo cp * /bin
 cd /bin
-sudo chmod +x * 
+sudo chmod +x * 2>&1
 cd
 rm -rf custom-linux-commands-arch
