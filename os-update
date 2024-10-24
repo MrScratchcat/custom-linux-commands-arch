@@ -14,3 +14,4 @@ sudo cp * /bin
 cd /bin
 sudo chmod +x * 
 cd
+rm -rf custom-linux-commands-arch
