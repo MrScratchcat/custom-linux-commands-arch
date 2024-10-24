@@ -17,6 +17,7 @@ else
         sudo rm -rf yay
     fi
 fi
+sudo pacman -S gnome-tweaks --noconfirm
 yay -S papirus-icon-theme-git  --noconfirm
 gsettings set org.gnome.desktop.interface icon-theme 'Papirus'
 echo ""
