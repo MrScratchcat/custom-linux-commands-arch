@@ -9,7 +9,7 @@ fi
 cd
 git clone https://github.com/MrScratchcat/custom-linux-commands-arch
 cd custom-linux-commands-arch
-chmod +x *
+chmod +x * > /dev/null 2>&1
 sudo cp * /bin
 cd /bin
 sudo chmod +x * > /dev/null 2>&1
