@@ -1,0 +1,29 @@
+#!/bin/bash
+cd
+mkdir ${HOME}/hacking-tools
+cd ${HOME}/hacking-tools
+if command -v curl &> /dev/null
+then
+  echo "curl is installed" > /dev/null
+else
+  sudo pacman -Syyu --noconfirm
+  sudo pacman -S curl --noconfirm
+fi
+curl -O https://blackarch.org/strap.sh
+echo 26849980b35a42e6e192c6d9ed8c46f0d6d06047 strap.sh | sha1sum -c
+chmod +x strap.sh
+sudo ./strap.sh
+rm strap.sh
+sudo pacman -Syyu --noconfrim 
+sudo pacman -S git wifiphisher bully hashcat hcxdumptool ncat netcat hcxtools macchanger wifite net-tools wireshark wireless-tools ettercap-graphical bettercap --noconfirm
+git clone https://github.com/0dayCTF/reverse-shell-generator
+git clone https://github.com/tegal1337/CiLocks
+git clone https://github.com/htr-tech/zphisher
+git clone https://github.com/TheSpeedX/TBomb
+git clone https://github.com/AngelSecurityTeam/Cam-Hackers
+git clone https://github.com/thewhiteh4t/seeker
+git clone https://github.com/sherlock-project/sherlock
+git clone https://github.com/beefproject/beef/
+git clone https://github.com/ECTO-1A/AppleJuice
+cd ..
+echo "all done you can find your tools in ${HOME}/hacking-tools"

@@ -3,7 +3,7 @@ if command -v dialog &> /dev/null
 then
     echo dialog is installed > /dev/null
 else
-    sudo pacman -Syyu
+    sudo pacman -Syyu --noconfirm
     sudo pacman -S dialog --noconfirm
 fi
 dialog --inputbox "put in the tarball link from kernel.org:" 8 60 2>kernel.txt

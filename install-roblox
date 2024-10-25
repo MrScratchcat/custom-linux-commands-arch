@@ -3,7 +3,7 @@ if command -v flatpak &> /dev/null
 then
   echo "flatpak is installed" > /dev/null
 else
-  sudo pacman -Syyu
+  sudo pacman -Syyu --noconfirm
   sudo pacman -S flatpak --noconfirm
   clear
 fi

@@ -17,11 +17,7 @@ else
         sudo rm -rf yay
     fi
 fi
-if [[ "$XDG_CURRENT_DESKTOP" == "GNOME" ]] || [[ "$DESKTOP_SESSION" == "gnome" ]]; then
-    gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
-    sudo pacman -S gnome-tweaks --noconfirm
-    yay -S papirus-icon-theme-git --noconfirm
-    gsettings set org.gnome.desktop.interface icon-theme 'Papirus'
-else
-    echo "You are not using GNOME and you need gnome for this icon theme."
-fi
+echo "installing displaylink..."
+yay -S displaylink displaylink-connect --noconfirm
+sudo systemctl enable displaylink.service
+sudo systemctl start displaylink.service

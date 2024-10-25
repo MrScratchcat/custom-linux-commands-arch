@@ -1,0 +1,246 @@
+#!/bin/bash
+check_whiptail() {
+    if command -v whiptail &> /dev/null; then
+        echo "Whiptail is already installed."
+        return 0
+    else
+        echo "Whiptail is not installed."
+        return 1
+    fi
+}
+
+check_curl() {
+    if command -v curl &> /dev/null; then
+        echo "curl is already installed."
+        return 0
+    else
+        echo "curl is not installed."
+        return 1
+    fi
+}
+
+# Function to create start.sh for the Minecraft server
+create_start_script() {
+    START_SCRIPT="./start.sh"
+    cat << 'EOF' > "$START_SCRIPT"
+#!/bin/bash
+ram=$(free -h | grep -i mem | awk '{print int($2 + 0.5)}')
+if [ -z "$STY" ]; then
+    # Not in a screen session, start a new one
+    echo "Starting a new screen session..."
+    screen -dmS minecraft_server bash "$0" "$@"
+    exit 0
+fi
+cd "$(dirname "$0")"
+echo "Starting Minecraft server with ${ram} GB of RAM..."
+java -Xmx${ram}G -Xms${ram}G -jar server.jar nogui
+EOF
+    chmod +x "$START_SCRIPT"
+}
+
+install_whiptail() {
+    if [[ -f /etc/debian_version ]]; then
+        sudo apt update && sudo apt install -y whiptail
+    elif [[ -f /etc/redhat-release ]]; then
+        sudo dnf install -y newt
+    elif [[ -f /etc/arch-release ]]; then
+        sudo pacman -Syu --noconfirm newt
+    else
+        echo "Unsupported Linux distribution. Please install whiptail manually."
+        exit 1
+    fi
+}
+
+install_curl() {
+    if [[ -f /etc/debian_version ]]; then
+        sudo apt update && sudo apt install -y curl
+    elif [[ -f /etc/redhat-release ]]; then
+        sudo dnf install -y curl
+    elif [[ -f /etc/arch-release ]]; then
+        sudo pacman -Syu --noconfirm curl
+    else
+        echo "Unsupported Linux distribution. Please install curl manually."
+        exit 1
+    fi
+}
+
+
+install_deps() {
+    if [[ -f /etc/debian_version ]]; then
+        sudo apt update && sudo apt install -y openjdk-21-jdk curl screen 
+    elif [[ -f /etc/redhat-release ]]; then
+        sudo dnf install -y openjdk-21-jdk curl screen
+    elif [[ -f /etc/arch-release ]]; then
+        sudo pacman -Syu --noconfirm jre-openjdk-headless curl screen
+    else
+        echo "Unsupported Linux distribution. Please install whiptail manually."
+        exit 1
+    fi
+}
+
+create_systemd_service() {
+    # Define the systemd service file path
+    SERVICE_FILE="/etc/systemd/system/minecraft_server.service"
+
+    # Create the systemd service file
+    cat << EOF | sudo tee "$SERVICE_FILE" > /dev/null
+[Unit]
+Description=MinecraftServer
+
+[Service]
+ExecStart=$(pwd)/start.sh
+WorkingDirectory=$(pwd)
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    sudo systemctl daemon-reload
+    sudo systemctl enable minecraft_server.service
+}
+
+if ! check_whiptail; then
+    install_whiptail
+fi
+
+if ! check_curl; then
+    install_curl
+fi
+
+latest=$(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | jq -r '.versions[] | select(.type=="release") | .id' | head -n 1)
+architecture=vanilla
+
+if [ $architecture == "vanilla" ]; then
+    loader=$(whiptail --title "Minecraft loader Selection" --menu "Choose your game loader" 15 60 2 \
+    "java" "" \
+    "paper" "" \
+    "bedrock" "" \
+    "fabric" "" \
+    "forge" "" 3>&1 1>&2 2>&3)
+fi
+
+if [ $loader == "bedrock" ]; then
+    version=$(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | jq -r '.versions[] | select(.type=="release") | .id' | head -n 1)
+else
+    version=$(whiptail --title "Input Required" --inputbox "Please enter the version name (e.g., 1.16.5 $latest):" 10 60 3>&1 1>&2 2>&3)
+    if [ $? -eq 0 ]; then
+        echo "You entered: $version" > /dev/null
+    else
+        exit
+    fi
+fi
+
+difficulty=$(whiptail --title "Minecraft difficulty Selection" --menu "Choose your difficulty" 15 60 2 \
+"peaceful" "" \
+"easy" "" \
+"normal" "" \
+"hard" "" \
+"hardcore" "" 3>&1 1>&2 2>&3)
+
+if [ $difficulty == "hardcore" ]; then
+    hardcore="true"
+else
+    hardcore="false"
+fi
+
+name=$(whiptail --title "Input Required" --inputbox "Please enter the server name:" 10 60 3>&1 1>&2 2>&3)
+if [ -z "$name" ]; then
+   name="a very cool minecraft server"
+fi
+
+distance=$(whiptail --title "Input Required" --inputbox "Please enter your render distance" 10 60 3>&1 1>&2 2>&3)
+if [ -z "$distance" ]; then
+   distance="10"
+fi
+
+port=$(whiptail --title "Input Required" --inputbox "Please enter your port number nothing is default" 10 60 3>&1 1>&2 2>&3)
+if [ -z "$port" ]; then
+    port=25565
+fi
+
+seed=$(whiptail --title "Input Required" --inputbox "Please enter your seed leave emty for random" 10 60 3>&1 1>&2 2>&3)
+
+gamemode=$(whiptail --title "Minecraft Game Mode Selection" --menu "Choose your game mode" 15 60 2 \
+"survival" "" \
+"creative" "" 3>&1 1>&2 2>&3)
+
+if whiptail --title "Confirmation" --yesno "Do you want to start your minecraft server on boot" 10 60; then
+    create_start_script
+    create_systemd_service
+    startup="true"
+else
+    ram=$(free -h | grep -i mem | awk '{print int($2 + 0.5)}')
+    echo "java -Xmx${mem}G -Xms${mem}G -jar server.jar nogui" > start.sh
+fi
+
+if whiptail --title "Confirmation" --yesno "Last question do you agree with the eula" 10 60; then
+    date=$(date +%Y-%m-%d)
+    echo "$date" > eula.txt
+    echo "eula=true" >> eula.txt
+else
+    echo "did not agree with eula exiting"
+    exit
+fi
+install_deps
+echo "#Minecraft server properties
+allow-flight=true
+allow-nether=true
+broadcast-console-to-ops=true
+broadcast-rcon-to-ops=true
+difficulty=${difficulty}
+enable-command-block=false
+enable-jmx-monitoring=false
+enable-query=false
+enable-rcon=false
+enable-status=true
+enforce-secure-profile=true
+enforce-whitelist=false
+entity-broadcast-range-percentage=100
+force-gamemode=false
+function-permission-level=2
+gamemode=${gamemode}
+generate-structures=true
+generator-settings={}
+hardcore=${hardcore}
+hide-online-players=false
+initial-disabled-packs=
+initial-enabled-packs=vanilla
+level-name=world
+level-seed=${seed}
+level-type=minecraft:normal
+max-chained-neighbor-updates=1000000
+max-players=20
+max-tick-time=60000
+max-world-size=29999984
+motd=${name}
+network-compression-threshold=256
+online-mode=true
+op-permission-level=4
+player-idle-timeout=0
+prevent-proxy-connections=false
+pvp=true
+query.port=25565
+rate-limit=0
+rcon.password=
+rcon.port=25575
+require-resource-pack=false
+resource-pack=
+resource-pack-prompt=
+resource-pack-sha1=
+server-ip=
+server-port=${port}
+simulation-distance=${distance}
+spawn-animals=true
+spawn-monsters=true
+spawn-npcs=true
+spawn-protection=0
+sync-chunk-writes=true
+text-filtering-config=
+use-native-transport=true
+view-distance=${distance}
+white-list=false" > server.properties
+wget -O server.jar https://jar.setup.md/download/${architecture}/${version}/${loader}
+if [ $startup == "true" ]; then 
+    echo "to acces your minecraft server type:"
+    echo "screen -r minecraft_server"
+fi

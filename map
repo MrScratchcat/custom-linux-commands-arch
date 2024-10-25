@@ -3,7 +3,7 @@ if command -v inetutils &> /dev/null
 then
     echo inetutils is installed > /dev/null
 else
-    sudo pacman -Syyu
+    sudo pacman -Syyu --noconfirm
     sudo pacman -S inetutils --noconfirm
 fi
 telnet towel.blinkenlights.nl

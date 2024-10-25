@@ -1,8 +1,19 @@
 #!/bin/bash
-sudo pacman -Syu --noconfirm
-sudo pacman -S --needed base-devel git --noconfirm
-git clone https://aur.archlinux.org/yay.git
-cd yay
-makepkg -si --noconfirm
-cd ..
-sudo rm -rf yay
+if command -v yay &> /dev/null
+then
+    echo "Yay is already installed!"
+else
+    sudo pacman -Syyu --noconfirm
+    echo "Yay is not installed. installing yay..."
+    if [ -f /etc/manjaro-release ]; then
+        sudo pamac install yay --no-confirm
+    else
+        sudo pacman -Syu --noconfirm
+        sudo pacman -S --needed base-devel git --noconfirm
+        git clone https://aur.archlinux.org/yay.git
+        cd yay
+        makepkg -si --noconfirm
+        cd ..
+        sudo rm -rf yay
+    fi
+fi

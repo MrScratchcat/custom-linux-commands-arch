@@ -4,7 +4,7 @@ if command -v zenity &> /dev/null
 then
   echo "zenity is installed" > /dev/null
 else
-  sudo pacman -Syyu
+  sudo pacman -Syyu --noconfirm
   sudo pacman -S zenity --noconfirm
   clear
 fi
