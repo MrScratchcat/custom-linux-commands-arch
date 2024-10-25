@@ -18,6 +18,7 @@ else
     fi
 fi
 echo "installing displaylink..."
+sudo pacman -S fakeroot --noconfirm
 yay -S displaylink displaylink-connect --noconfirm
 sudo systemctl enable displaylink.service
 sudo systemctl start displaylink.service
