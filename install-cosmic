@@ -1,5 +1,13 @@
 #!/bin/bash
-sudo pacman -Syyu
+sudo pacman -Syyu --noconfirm
+if command -v flatpak &> /dev/null
+then
+  echo "flatpak is installed" > /dev/null
+else
+  sudo pacman -Syyu --noconfirm
+  sudo pacman -S flatpak --noconfirm
+  clear
+fi
 if lspci | grep -i "vga" | grep -iq "intel"; then
     sudo pacman -S vulkan-intel --noconfirm 
 elif lspci | grep -i "vga\|3d" | grep -iq "nvidia"; then
@@ -7,7 +15,8 @@ elif lspci | grep -i "vga\|3d" | grep -iq "nvidia"; then
 elif lspci | grep -i "vga\|display" | grep -iq "amd\|ati"; then
     sudo pacman -S vulkan-radeon --noconfirm 
 fi
-sudo pacman -S cosmic cosmic-session --noconfirm 
+sudo pacman -S cosmic cosmic-session --noconfirm
+flatpak install --user flathub dev.edfloreshz.CosmicTweaks -y
 if pgrep -x "lightdm" > /dev/null; then
     sudo systemctl disable lightdm
 elif pgrep -x "gdm" > /dev/null; then
