@@ -1,0 +1,16 @@
+#!/bin/bash
+if command -v curl &> /dev/null
+then
+  echo "curl is installed" > /dev/null
+else
+  sudo pacman -Syyu --noconfirm
+  sudo pacman -S curl --noconfirm
+  clear
+fi
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+if ! grep -q "export PATH="$HOME/.cargo/bin:$PATH" ~/.bash_profile; then
+    echo 'export PATH="$HOME/.cargo/bin:$PATH" >> bash_profile' >> ~/.bash_profile
+    echo "done"
+else
+    echo "done"
+fi
