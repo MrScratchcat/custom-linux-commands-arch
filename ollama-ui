@@ -1,0 +1,134 @@
+#!/bin/bash
+continue=0
+if [ ! -d "${HOME}/.ollama-chat" ]; then
+    mkdir ${HOME}/.ollama-chat
+    mkdir ${HOME}/.ollama-chat/voskmodels
+fi
+banner () {
+echo " ▒█████   ██▓     ██▓    ▄▄▄       ███▄ ▄███▓ ▄▄▄      "
+echo "▒██▒  ██▒▓██▒    ▓██▒   ▒████▄    ▓██▒▀█▀ ██▒▒████▄    "
+echo "▒██░  ██▒▒██░    ▒██░   ▒██  ▀█▄  ▓██    ▓██░▒██  ▀█▄  "
+echo "▒██   ██░▒██░    ▒██░   ░██▄▄▄▄██ ▒██    ▒██ ░██▄▄▄▄██ "
+echo "░ ████▓▒░░██████▒░██████▒▓█   ▓██▒▒██▒   ░██▒ ▓█   ▓██▒"
+echo "░ ▒░▒░▒░ ░ ▒░▓  ░░ ▒░▓  ░▒▒   ▓▒█░░ ▒░   ░  ░ ▒▒   ▓▒█░"
+echo "  ░ ▒ ▒░ ░ ░ ▒  ░░ ░ ▒  ░ ▒   ▒▒ ░░  ░      ░  ▒   ▒▒ ░"
+echo "░ ░ ░ ▒    ░ ░     ░ ░    ░   ▒   ░      ░     ░   ▒   "
+echo "    ░ ░      ░  ░    ░  ░     ░  ░       ░         ░  ░"
+echo "                                                       "
+}
+response="How can I help you today?"
+clear 
+banner
+export PATH="$PATH:$HOME/.local/bin"
+link="http://localhost:11434"
+folder=${HOME}/.ollama-chat/
+history_file="${folder}chat-history.json"
+model="llama3.2:1b"
+clear
+banner
+user_prompt () {
+    user_input=$(zenity --entry --title="ollama-chat" --text="$response \n  \n you:")
+}
+
+initialize_history() {
+  if [[ ! -f "$history_file" ]]; then
+    echo '{"model": "'"$model"'", "messages": []}' > "$history_file"
+  else
+    jq --arg model "$model" '.model = $model' "$history_file" > tmp.json && mv tmp.json "$history_file"
+  fi
+}
+
+update_model_in_history() {
+  local new_model="$1"
+  model="$new_model"
+  jq --arg model "$new_model" '.model = $model' "$history_file" > tmp.json && mv tmp.json "$history_file"
+  echo "Model updated to: $new_model"
+}
+
+add_message_to_history() {
+  local role="$1"
+  local content="$2"
+  jq --arg role "$role" --arg content "$content" \
+    '.messages += [{"role": $role, "content": $content}]' \
+    "$history_file" > tmp.json && mv tmp.json "$history_file"
+}
+
+chat_with_image() {
+  file=$(zenity --file-selection --title="Select a picture" --file-filter="Image files (jpg, png, gif) | *.jpg *.png *.gif")
+  image=$(cat $file | base64)
+  echo "image uploaded"
+  user_prompt
+  jq --arg role "user" --arg content "$user_input" --arg image "$image" \
+      '.messages += [{"role": $role, "prompt": $content, "images": [$image]}]' \
+      "$history_file" > tmp.json && mv tmp.json "$history_file"
+  chat_with_ollama
+}
+
+chat_with_ollama() {
+  response=$(
+      (
+          curl -s -X POST "$link/api/chat" -d @"$history_file" |
+          jq --unbuffered -r '.message.content' |
+          tr -d '\n' |                          
+          sed 's/\\n/ /g'
+      ) &
+      pid=$!
+      progress=0
+      (
+          while kill -0 $pid 2> /dev/null; do
+              echo "$progress"
+              sleep 1
+              ((progress += 5))
+              if [ $progress -ge 100 ]; then
+                  progress=0
+              fi
+          done
+      ) | zenity --progress \
+                --title="Ollama is thinking" \
+                --text="Waiting for response..." \
+                --percentage=0 \
+                --auto-close
+  )
+  if [ "$response" == "goodbye" ]; then
+    zenity --forms --text="$response" --title="ollama-chat"
+  fi
+  add_message_to_history "assistant" "$response"
+
+}
+
+initialize_history
+
+while true; do
+
+  user_prompt
+
+  if [[ "$user_input" == "goodbye" ]]; then
+    user_input="i got to go i see you next time goodbye"
+    add_message_to_history "user" "$user_input"
+    chat_with_ollama
+    zenity --forms --text="$response" --title="ollama-chat"
+    echo "Exiting chat."
+    exit
+  elif [[ "$user_input" == "forget every single thing" ]]; then
+    clear
+    banner
+    response="How can I help you today?"
+    echo '{"model": "'"$model"'", "messages": []}' > "$history_file"
+
+  elif [[ "$user_input" =~ ^model:[[:space:]]*(.*)$ ]]; then
+    new_model="${BASH_REMATCH[1]}"
+    update_model_in_history "$new_model"
+
+  elif [[ "$user_input" == "look" ]]; then
+    echo "Processing image..."
+    chat_with_image
+  elif [[ "$user_input" == "luke" ]]; then
+    echo "Processing image..."
+    chat_with_image
+  elif [[ "$user_input" == "update" ]]; then
+    update_model
+  else
+    add_message_to_history "user" "$user_input"
+    chat_with_ollama
+  fi
+done
