@@ -8,13 +8,15 @@ else
   clear
 fi
 flatpak install --user flathub one.flipperzero.qFlipper -y
-sudo echo '#Flipper Zero serial port
+echo '#Flipper Zero serial port
 SUBSYSTEMS=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", ATTRS{manufacturer}=="Flipper Devices Inc.", TAG+="uaccess"
 #Flipper Zero DFU
 SUBSYSTEMS=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="df11", ATTRS{manufacturer}=="STMicroelectronics", TAG+="uaccess"
 #Flipper ESP32s2 BlackMagic
 SUBSYSTEMS=="usb", ATTRS{idVendor}=="303a", ATTRS{idProduct}=="40??", ATTRS{manufacturer}=="Flipper Devices Inc.", TAG+="uaccess"
-' > /etc/udev/rules.d/42-flipperzero.rules
+' > 42-flipperzero.rules
+sudo cp 42-flipperzero.rules /etc/udev/rules.d/42-flipperzero.rules
+rm 42-flipperzero.rules
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 sudo usermod -a -G uucp $USER
