@@ -7,8 +7,15 @@ else
   sudo pacman -S flatpak --noconfirm
   clear
 fi
-if flatpak list | grep -q "Sober"; then
-    flatpak remove sober -y > /dev/null 2>&1
+
+if [ -n "$(flatpak list | grep -o sober)" ]; then
+    read -p "sober is already installed do you want to reinstall? y/n: " answer
+    case $answer in
+        [Yy]* ) echo "Proceeding...";;
+        [Nn]* ) exit ;;
+        * ) echo "Invalid input. Please enter y or n.";;
+    esac
+    flatpak remove sober -y
     flatpak install --user https://sober.vinegarhq.org/sober.flatpakref -y
 else
     flatpak install --user https://sober.vinegarhq.org/sober.flatpakref -y
