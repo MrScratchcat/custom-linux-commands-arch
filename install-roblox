@@ -21,6 +21,7 @@ if [ -n "$(flatpak list | grep -o sober)" ]; then
         flatpak override --user --socket=x11 --nosocket=wayland
       fi
     fi
+    flatpak update -y
     flatpak install --user https://sober.vinegarhq.org/sober.flatpakref -y
 else
     if [ "$(echo $XDG_SESSION_TYPE)" = "wayland" ]; then
@@ -28,5 +29,6 @@ else
         flatpak override --user --socket=x11 --nosocket=wayland
       fi
     fi
+    flatpak update -y
     flatpak install --user https://sober.vinegarhq.org/sober.flatpakref -y
 fi
