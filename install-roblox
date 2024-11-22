@@ -16,7 +16,17 @@ if [ -n "$(flatpak list | grep -o sober)" ]; then
         * ) echo "Invalid input. Please enter y or n.";;
     esac
     flatpak remove sober -y
+    if [ "$(echo $XDG_SESSION_TYPE)" = "wayland" ]; then
+      if [ -d "/proc/driver/nvidia" ]; then
+        flatpak override --user --socket=x11 --nosocket=wayland
+      fi
+    fi
     flatpak install --user https://sober.vinegarhq.org/sober.flatpakref -y
 else
+    if [ "$(echo $XDG_SESSION_TYPE)" = "wayland" ]; then
+      if [ -d "/proc/driver/nvidia" ]; then
+        flatpak override --user --socket=x11 --nosocket=wayland
+      fi
+    fi
     flatpak install --user https://sober.vinegarhq.org/sober.flatpakref -y
 fi
