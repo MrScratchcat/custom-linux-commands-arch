@@ -1,0 +1,144 @@
+#!/bin/bash
+# hotspot-manager.sh
+# This script uses zenity to present a graphical menu for managing a WiFi hotspot.
+# It lets you start/stop the hotspot and change settings such as the hotspot name (SSID),
+# password, and the wireless interface on which to run the hotspot.
+#
+# Requirements:
+#   - nmcli (NetworkManager)
+#   - zenity
+#
+# Save this script, make it executable (chmod +x hotspot-manager.sh), and run it.
+
+CONFIG_FILE="$HOME/.hotspot_config"
+
+# Load configuration from file or set defaults if the file does not exist.
+load_config() {
+  if [[ -f "$CONFIG_FILE" ]]; then
+    source "$CONFIG_FILE"
+  else
+    SSID="MyHotspot"
+    PASSWORD="password123"
+    # Leave INTERFACE empty; it will be selected during configuration.
+    INTERFACE=""
+    save_config
+  fi
+}
+
+# Save current configuration to file.
+save_config() {
+  cat <<EOF > "$CONFIG_FILE"
+SSID="$SSID"
+PASSWORD="$PASSWORD"
+INTERFACE="$INTERFACE"
+EOF
+}
+
+# Allow user to configure hotspot settings via individual Zenity dialogs.
+configure_hotspot() {
+  load_config
+  
+  # Prompt for SSID with the old value prefilled.
+  new_ssid=$(zenity --entry --title "Configure Hotspot" \
+    --text "Enter SSID (Hotspot Name):" --entry-text "$SSID")
+  if [[ $? -ne 0 ]]; then
+    return
+  fi
+  
+  # Loop until the two password entries match.
+  while true; do
+    new_password=$(zenity --entry --title "Configure Hotspot" \
+      --text "Enter Password:" --entry-text "$PASSWORD" --hide-text)
+    if [[ $? -ne 0 ]]; then
+      return
+    fi
+    confirm_password=$(zenity --entry --title "Configure Hotspot" \
+      --text "Confirm Password:" --hide-text)
+    if [[ $? -ne 0 ]]; then
+      return
+    fi
+    if [[ "$new_password" == "$confirm_password" ]]; then
+      break
+    else
+      zenity --error --text="Passwords do not match. Please try again."
+    fi
+  done
+
+  # Get all available WiFi interfaces.
+  # This command lists devices with type 'wifi' in a tab-delimited format.
+  available_interfaces=$(nmcli -t -f DEVICE,TYPE device status | grep ":wifi" | cut -d: -f1)
+  if [[ -z "$available_interfaces" ]]; then
+    zenity --error --text="No WiFi interfaces found on your device."
+    return
+  fi
+
+  # Allow selection from the available interfaces.
+  interface_selection=$(echo "$available_interfaces" | zenity --list \
+    --title "Select WiFi Interface" \
+    --text "Select one of the available WiFi interfaces:" \
+    --column "Interface")
+  if [[ $? -ne 0 || -z "$interface_selection" ]]; then
+    zenity --error --text="No interface selected, aborting configuration."
+    return
+  fi
+
+  SSID="$new_ssid"
+  PASSWORD="$new_password"
+  INTERFACE="$interface_selection"
+  save_config
+  zenity --info --text="Configuration saved."
+}
+
+# Start the hotspot using nmcli.
+start_hotspot() {
+  load_config
+  if [[ -z "$INTERFACE" ]]; then
+    zenity --error --text="No WiFi interface configured. Please run 'Configure Hotspot' first."
+    return
+  fi
+  # Attempt to start the hotspot with the given configuration.
+  nmcli dev wifi hotspot ifname "$INTERFACE" ssid "$SSID" password "$PASSWORD" >/dev/null 2>&1
+  if [[ $? -eq 0 ]]; then
+    zenity --info --text="Hotspot started successfully on interface '$INTERFACE'!"
+  else
+    zenity --error --text="Failed to start hotspot. Check that your interface ($INTERFACE) supports AP mode."
+  fi
+}
+
+# Stop the hotspot.
+stop_hotspot() {
+  # The hotspot created by nmcli is typically named "Hotspot".
+  nmcli connection down Hotspot >/dev/null 2>&1
+  if [[ $? -eq 0 ]]; then
+    zenity --info --text="Hotspot stopped."
+  else
+    zenity --error --text="Failed to stop hotspot. It may not be running."
+  fi
+}
+
+# Main loop: show a Zenity list to choose an action.
+while true; do
+  CHOICE=$(zenity --list --title="Hotspot Manager" \
+    --text="Select an action:" \
+    --column="Action" "Start Hotspot" "Stop Hotspot" "Configure Hotspot" "Exit")
+  
+  # If the user closes the window or selects Exit, exit the loop.
+  if [[ $? -ne 0 || "$CHOICE" == "Exit" ]]; then
+    break
+  fi
+  
+  case "$CHOICE" in
+    "Start Hotspot")
+      start_hotspot
+      ;;
+    "Stop Hotspot")
+      stop_hotspot
+      ;;
+    "Configure Hotspot")
+      configure_hotspot
+      ;;
+  esac
+done
+
+exit 0
+
