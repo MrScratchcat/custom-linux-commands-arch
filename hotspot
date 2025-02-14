@@ -1,15 +1,4 @@
 #!/bin/bash
-# hotspot-manager.sh
-# This script uses zenity to present a graphical menu for managing a WiFi hotspot.
-# It lets you start/stop the hotspot and change settings such as the hotspot name (SSID),
-# password, and the wireless interface on which to run the hotspot.
-#
-# Requirements:
-#   - nmcli (NetworkManager)
-#   - zenity
-#
-# Save this script, make it executable (chmod +x hotspot-manager.sh), and run it.
-
 CONFIG_FILE="$HOME/.hotspot_config"
 
 # Load configuration from file or set defaults if the file does not exist.
