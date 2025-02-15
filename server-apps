@@ -1,0 +1,161 @@
+#!/bin/bash
+
+# Function to add a new server
+add_server() {
+    local host=$(zenity --entry --title="Add Server" --text="Enter the hostname:")
+    local ip=$(zenity --entry --title="Add Server" --text="Enter the IP address:")
+    local password=$(zenity --password --title="Add Server" --text="Enter the password:")
+
+    if [[ -z "$host" || -z "$ip" || -z "$password" ]]; then
+        zenity --error --text="All fields are required."
+        return
+    fi
+
+    echo "$host|$ip|$password" >> servers.txt 2>/dev/null
+
+    if [[ $? -eq 0 ]]; then
+        zenity --info --text="Server added successfully."
+    else
+        zenity --error --text="Failed to add server."
+    fi
+}
+
+# Function to add a new command
+add_command() {
+    local name=$(zenity --entry --title="Add Command" --text="Enter the command name:")
+    local command=$(zenity --entry --title="Add Command" --text="Enter the command:")
+
+    if [[ -z "$name" || -z "$command" ]]; then
+        zenity --error --text="All fields are required."
+        return
+    fi
+
+    echo "$name|$command" >> commands.txt 2>/dev/null
+
+    if [[ $? -eq 0 ]]; then
+        zenity --info --text="Command added successfully."
+    else
+        zenity --error --text="Failed to add command."
+    fi
+}
+
+# Function to edit an existing server
+edit_server() {
+    local servers=$(awk -F '|' '{print $1}' "servers.txt")
+    if [[ -z "$servers" ]]; then
+        zenity --info --text="No servers available."
+        return
+    fi
+
+    local selected_server=$(zenity --list --title="Edit Server" --column="Servers" "$servers")
+
+    if [[ -z "$selected_server" ]]; then
+        return
+    fi
+
+    local new_host=$(zenity --entry --title="Edit Server" --text="Enter the new hostname:")
+    local new_ip=$(zenity --entry --title="Edit Server" --text="Enter the new IP address:")
+    local new_password=$(zenity --password --title="Edit Server" --text="Enter the new password:")
+
+    if [[ -z "$new_host" || -z "$new_ip" || -z "$new_password" ]]; then
+        zenity --error --text="All fields are required."
+        return
+    fi
+
+    sed -i "s/$selected_server|$host|$ip|$password|$name|$command|/|$new_host|$new_ip|$new_password|" servers.txt 2>/dev/null
+
+    if [[ $? -eq 0 ]]; then
+        zenity --info --text="Server edited successfully."
+    else
+        zenity --error --text="Failed to edit server."
+    fi
+}
+
+# Function to edit an existing command
+edit_command() {
+    local commands=$(awk -F '|' '{print $1}' "commands.txt")
+    if [[ -z "$commands" ]]; then
+        zenity --info --text="No commands available."
+        return
+    fi
+
+    local selected_command=$(zenity --list --title="Edit Command" --column="Commands" "$commands")
+
+    if [[ -z "$selected_command" ]]; then
+        return
+    fi
+
+    local new_name=$(zenity --entry --title="Edit Command" --text="Enter the new command name:")
+    local new_command=$(zenity --entry --title="Edit Command" --text="Enter the new command:")
+
+    if [[ -z "$new_name" || -z "$new_command" ]]; then
+        zenity --error --text="All fields are required."
+        return
+    fi
+
+    sed -i "s/$selected_command|$name|$command|/|$new_name|$new_command|" commands.txt 2>/dev/null
+
+    if [[ $? -eq 0 ]]; then
+        zenity --info --text="Command edited successfully."
+    else
+        zenity --error --text="Failed to edit command."
+    fi
+}
+
+# Function to execute a command on a server
+execute_command() {
+    local servers=$(awk -F '|' '{print $1}' "servers.txt")
+    if [[ -z "$servers" ]]; then
+        zenity --info --text="No servers available."
+        return
+    fi
+
+    local selected_server=$(zenity --list --title="Execute Command" --column="Servers" "$servers")
+
+    if [[ -z "$selected_server" ]]; then
+        return
+    fi
+
+    local selected_command=$(zenity --entry --title="Execute Command" --text="Enter the command name:")
+
+    if [[ -z "$selected_command" ]]; then
+        zenity --error --text="Command name is required."
+        return
+    fi
+
+    local command_line
+    for server in $servers; do
+        if [[ $server == *"$selected_server"* ]]; then
+            IFS='|' read -r name command <<< "$server"
+            if [[ "$name" == "$selected_command" ]]; then
+                command_line="$command"
+                break
+            fi
+        fi
+    done
+
+    if [[ -z "$command_line" ]]; then
+        zenity --error --text="Command not found."
+        return
+    fi
+
+    echo "Executing $command_line..."
+    eval "$command_line"
+
+    if [[ $? -eq 0 ]]; then
+        zenity --info --text="Command executed successfully."
+    else
+        zenity --error --text="Failed to execute command."
+    fi
+}
+
+# Main script logic
+while true; do
+    choice=$(zenity --list --title="Server Manager" --column="Action" "Add Server" "Edit Server" "Execute Command" "Exit")
+    case $choice in
+        "Add Server") add_server ;;
+        "Edit Server") edit_server ;;
+        "Execute Command") execute_command ;;
+        "Exit") exit 0 ;;
+    esac
+done
