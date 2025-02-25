@@ -1,0 +1,19 @@
+#!/bin/bash
+if whiptail --yesno "Do you have BeamMP installed?" 10 50 --title "Confirmation"; then
+    echo "good"
+else
+    exit 0
+fi
+cd
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg && ./bootstrap-vcpkg.sh --disableMetrics
+export VCPKG_ROOT="~/vcpkg"
+export PATH=$VCPKG_ROOT:$PATH
+cd
+sudo pacman -S base-devel cmake --noconfirm
+git clone --recurse-submodules https://github.com/BeamMP/BeamMP-Launcher.git
+cd BeamMP-Launcher
+cmake -DCMAKE_BUILD_TYPE=Release . -B bin -DCMAKE_TOOLCHAIN_FILE="~/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-linux
+cmake --build bin --parallel --config Release
+echo "Finished"
+echo "To start BeamMP go to: ${HOME}/BeamMP-Launcher/bin/BeamMP-Launcher"
