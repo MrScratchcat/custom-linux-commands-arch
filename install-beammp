@@ -2,6 +2,7 @@
 if whiptail --yesno "Do you have BeamNG.Drive installed?" 10 50 --title "Confirmation"; then
     echo "good"
 else
+    whiptail --msgbox "You need to have BeamNG.Drive installed via steam to make this work" 10 50 --title "ERROR"
     exit 0
 fi
 cd
