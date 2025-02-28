@@ -1,5 +1,5 @@
 #!/bin/bash
-if whiptail --yesno "Do you have BeamMP installed?" 10 50 --title "Confirmation"; then
+if whiptail --yesno "Do you have BeamNG.Drive installed?" 10 50 --title "Confirmation"; then
     echo "good"
 else
     exit 0
